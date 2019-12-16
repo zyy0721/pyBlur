@@ -66,58 +66,60 @@ class fromASTtoCode(NodeVisitor):
     def visit_With(self, node):
     
     #Expressions
+    def generator_visit(left, right):
+
+    def sequence_visit(left, right):
 
     def visit_Attribute(self, node):
 
-    def visit_Call(self, node):
-
-
-    def visit_Name(self, node):
-
-    def visit_Str(self, node):
-
     def visit_Bytes(self, node):
-
-    def visit_Num(self, node):
-
-    def visit_Tuple(self, node):
-    
-    def sequence_visit(left, right):
-
-    def visit_Dict(self, node):
 
     def visit_BinOp(self, node):
 
-    def visit_BoolOo(self, node):
+    def visit_BoolOp(self, node):
 
     def visit_Compare(self, node):
 
-    def visit_(self, node):
+    def visit_Call(self, node):
 
-    def visit_(self, node):
+    def visit_Dict(self, node):
 
-    def visit_(self, node):
-
-    def visit_(self, node):
-
-    def visit_(self, node):
-
-    def visit_(self, node):
-
-    def visit_(self, node):
-
-    def visit_(self, node):
-
-    def visit_(self, node):
-
+    def visit_DictComp(self, node):
     
+    def visit_ExtSlice(self, node):
 
+    def visit_Ellipsis(self, node):
+
+    def visit_IfExp(self, node):
+
+    def visit_Lamda(self, node):
+
+    def visit_Name(self, node):
+
+    def visit_Num(self, node):
+
+    def visit_Repr(self, node):
+
+    def visit_Subscript(self, node):
+
+    def visit_Slice(self, node):
+
+    def visit_Str(self, node):
+
+    def visit_Starred(self, node):
+
+    def visit_Tuple(self, node):
+
+    def visit_UnaryOp(self, node):
+        
+    def visit_Yield(self, node):
 
     #Helper Util
+    def visit_alias(self, node):
+    def visit_arguments(self, node):
+    def visit_comprehension(self, node):
 
-
-
-
+    def visit_excepthandler(self, node):
 
 
 def AST2Code(node, indentation = ' ' * 4, flagLineInfo = False):
