@@ -9,7 +9,12 @@ from ast import *
 #CMPOP SYMBOLS
 
 class fromASTtoCode(NodeVisitor):
-
+    def __init__(self, indentation, flagLineInfo = False):
+        self.indentation = indentation
+        self.flagLineInfo = flagLineInfo
+        self.result = []
+        self.myIndent = 0
+        self.newLines = 0
 
 
 
