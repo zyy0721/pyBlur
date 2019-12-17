@@ -1,12 +1,45 @@
 from ast import *
 
 #BINOP SYMBOLS
+BINOP_SYMBOLS = {}
+BINOP_SYMBOLS[Add] = '+'
+BINOP_SYMBOLS[Sub] = '-'
+BINOP_SYMBOLS[Mult] = '*'
+BINOP_SYMBOLS[Div] = '/'
+BINOP_SYMBOLS[Mod] = '%'
+BINOP_SYMBOLS[Pow] = '**'
+BINOP_SYMBOLS[LShift] = '<<'
+BINOP_SYMBOLS[RShift] = '>>'
+BINOP_SYMBOLS[BitOr] = '|'
+BINOP_SYMBOLS[BitXor] = '^'
+BINOP_SYMBOLS[BitAnd] = '&'
+BINOP_SYMBOLS[FloorDiv] = '//'
 
 #UNARYOP SYMBOLS
+UNARYOP_SYMBOLS = {}
+UNARYOP_SYMBOLS[Invert] = '~'
+UNARYOP_SYMBOLS[Not] = 'not'
+UNARYOP_SYMBOLS[UAdd] = '+'
+UNARYOP_SYMBOLS[USub] = '-'
 
 #BOOLOP SYMBOLS
+BOOLOP_SYMBOLS = {}
+BOOLOP_SYMBOLS[And] = 'and'
+BOOLOP_SYMBOLS[Or] = 'or'
+
 
 #CMPOP SYMBOLS
+CMPOP_SYMBOLS = {}
+CMPOP_SYMBOLS[Eq] = '=='
+CMPOP_SYMBOLS[NotEq] = '!='
+CMPOP_SYMBOLS[Lt] = '<'
+CMPOP_SYMBOLS[LtE] = '<='
+CMPOP_SYMBOLS[Gt] = '>'
+CMPOP_SYMBOLS[GtE] = '>='
+CMPOP_SYMBOLS[Is] = 'is'
+CMPOP_SYMBOLS[IsNot] = 'is not'
+CMPOP_SYMBOLS[In] = 'in'
+CMPOP_SYMBOLS[NotIn] = 'not in'
 
 class fromASTtoCode(NodeVisitor):
     def __init__(self, indentation, flagLineInfo = False):
