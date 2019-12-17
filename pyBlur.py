@@ -95,52 +95,81 @@ class Blur(ast.NodeTransformer):
         self.indef = False
 
     def Blur_global(self, name):
+        newname = string_random(3, 10)
+        self.globs[name] = newname
+        return newname
     
     def Blur_local(self, name):
+        newname = string_random(3, 10)
+        self.locs[name] = newname
+        return newname
 
     def visit_Import(self, node):
+        newname = self.Blur_global(node.names[0].name)
+        self.imports[node.names[0].name] = newname
 
     def visit_If(self, node):
-        self.newline(node)
-        self.write('if ')
-        self.visit(node.test)
-        self.write(':')
-        self.body(node.body)
-        while True:
-            else_ = node.orelse
-            if len(else_) == 0:
-                break
-            elif len(else_) == 1 and isinstance(else_[0], If):
-                node = else_[0]
-                self.newline()
-                self.write('elif ')
-                self.visit(node.test)
-                self.write(':')
-                self.body(node.body)
-            else:
-                self.newline()
-                self.write('else:')
-                self.body(else_)
-                break
-
+        if isinstance(node.test, Compare) and \
+                isinstance(node.test.left, Name) and \
+                node.test.left.id == '__name__':
+            for x, y in self.imports.items():
+                node.body.insert(0, import_random(x, y))
+        node.test = self.visit(node.test)
+        node.body = [self.visit(x) for x in node.body]
+        node.orelse = [self.visit(x) for x in node.orelse]
+        return node
 
     def visit_Str(self, node):
+        return string_random(node.s)
 
     def visit_Num(self, node):
+        d = random.randint(1, 256)
+        return BinOp(left=BinOp(left=Num(node.n / d), op=Mult(),
+                                right=Num(n=d)),
+                     op=Add(), right=Num(node.n % d))
 
     def visit_Attribute(self, node):
+        if isinstance(node.value, Name) and isinstance(node.value.ctx, Load):
+            node.value = self.visit(node.value)
+            return Call(func=Name(id='getattr', ctx=Load()), args=[
+                Name(id=node.value.id, ctx=Load()), Str(s=node.attr)],
+                        keywords=[], starargs=None, kwargs=None)
+        node.value = self.visit(node.value)
+        return node
 
     def visit_FunctionDef(self, node):
+        self.indef = True
+        self.locs = {}
+        node.name = self.obfuscate_global(node.name)
+        node.body = [self.visit(x) for x in node.body]
+        self.indef = False
+        return node
 
     def visit_Name(self, node):
+        # obfuscate known globals
+        if not self.indef and isinstance(node.ctx, Store) and \
+                node.id in ('teamname', 'flag'):
+            node.id = self.obfuscate_global(node.id)
+        # elif self.indef:
+        # if isinstance(node.ctx, Store):
+        # node.id = self.obfuscate_local(node.id)
+        # node.id = self.locs.get(node.id, node.id)
+        node.id = self.globs.get(node.id, node.id)
+        return node
 
     def visit_Module(self, node):
+        node.body = [y for y in (self.visit(x) for x in node.body) if y]
+        node.body = [y for y in (self.visit(x) for x in node.body) if y]
+        return node
 
 class GlobalVarBlur(ast.NodeTransformer):
-    def __init__(selff, globals):
+    def __init__(self, globs):
+        ast.NodeTransformer.__init__(self)
+        self.globs = {}
 
     def visit_Name(self, node):
-        
+        node.id = self.globs.get(node.id, node.id)
+        return node
 
 
 if __name__ == "__main__":
