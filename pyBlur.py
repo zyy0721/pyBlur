@@ -174,7 +174,21 @@ class GlobalVarBlur(ast.NodeTransformer):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print('Usage: python %s <your pyfile>' % sys.argv[0])
+        print('Usage: python %s <pyfile>' % sys.argv[0])
         exit(0)
+
+    if sys.argv[1] == '-':
+        root = ast.parse(sys.stdin.read())
+    else:
+        root = ast.parse(open(sys.argv[1], 'rb').read())
+
+    # obfuscate the AST
+    obf = Blur()
+    root = obf.visit(root)
+
+    # resolve all global names
+    root = GlobalVarBlur(obf.globs).visit(root)
+
+    print(fromASTtoCode.to_source(root))
 
     
