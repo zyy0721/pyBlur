@@ -21,7 +21,7 @@ class fromASTtoCode(NodeVisitor):
     #Statements
     def visit_Assert(self, node):
 
-    def visit_Assign(self, node):    
+    def visit_Assign(self, node):
 
     def visit_AugAssign(self, node):   
 
