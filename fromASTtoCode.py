@@ -49,18 +49,124 @@ class fromASTtoCode(NodeVisitor):
         self.myIndent = 0
         self.newLines = 0
 
+    def write(self, x):
+        if self.new_lines:
+            if self.result:
+                self.result.append('\n' * self.new_lines)
+            self.result.append(self.indent_with * self.indentation)
+            self.new_lines = 0
+        self.result.append(x)
 
+    def newline(self, node=None, extra=0):
+        self.new_lines = max(self.new_lines, 1 + extra)
+        if node is not None and self.add_line_information:
+            self.write('# line: %s' % node.lineno)
+            self.new_lines = 1
+
+    def body(self, statements):
+        self.new_line = True
+        self.indentation += 1
+        for stmt in statements:
+            self.visit(stmt)
+        self.indentation -= 1
+
+    def body_or_else(self, node):
+        self.body(node.body)
+        if node.orelse:
+            self.newline()
+            self.write('else:')
+            self.body(node.orelse)
+
+    def signature(self, node):
+        want_comma = []
+        def write_comma():
+            if want_comma:
+                self.write(', ')
+            else:
+                want_comma.append(True)
+
+        padding = [None] * (len(node.args) - len(node.defaults))
+        for arg, default in zip(node.args, padding + node.defaults):
+            write_comma()
+            self.visit(arg)
+            if default is not None:
+                self.write('=')
+                self.visit(default)
+        if node.vararg is not None:
+            write_comma()
+            self.write('*' + node.vararg)
+        if node.kwarg is not None:
+            write_comma()
+            self.write('**' + node.kwarg)
+
+    def decorators(self, node):
+        for decorator in node.decorator_list:
+            self.newline(decorator)
+            self.write('@')
+            self.visit(decorator)
 
     #Statements
     def visit_Assert(self, node):
+        self.newline(node)
+        self.write('assert ')
+        self.visit(node.test)
+        if node.msg is not None:
+           self.write(', ')
+           self.visit(node.msg)
 
     def visit_Assign(self, node):
+        self.newline(node)
+        for idx, target in enumerate(node.targets):
+            if idx:
+                self.write(', ')
+            self.visit(target)
+        self.write(' = ')
+        self.visit(node.value)
 
-    def visit_AugAssign(self, node):   
+    def visit_AugAssign(self, node):
+        self.newline(node)
+        self.visit(node.target)
+        self.write(' ' + BINOP_SYMBOLS[type(node.op)] + '= ')
+        self.visit(node.value)
 
     def visit_Break(self, node):
-    
+        self.newline(node)
+        self.write('break')
+
     def visit_ClassDef(self, node):
+        have_args = []
+
+        def paren_or_comma():
+            if have_args:
+                self.write(', ')
+            else:
+                have_args.append(True)
+                self.write('(')
+
+        self.newline(extra=2)
+        self.decorators(node)
+        self.newline(node)
+        self.write('class %s' % node.name)
+        for base in node.bases:
+            paren_or_comma()
+            self.visit(base)
+        # XXX: the if here is used to keep this module compatible
+        #      with python 2.6.
+        if hasattr(node, 'keywords'):
+            for keyword in node.keywords:
+                paren_or_comma()
+                self.write(keyword.arg + '=')
+                self.visit(keyword.value)
+            if node.starargs is not None:
+                paren_or_comma()
+                self.write('*')
+                self.visit(node.starargs)
+            if node.kwargs is not None:
+                paren_or_comma()
+                self.write('**')
+                self.visit(node.kwargs)
+        self.write(have_args and '):' or ':')
+        self.body(node.body)
     
     def visit_Continue(self, node): 
     
