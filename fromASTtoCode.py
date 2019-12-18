@@ -249,25 +249,115 @@ class fromASTtoCode(NodeVisitor):
         self.write('nonlocal ' + ', '.join(node.names))
 
     def visit_Pass(self, node):
+        self.newline(node)
+        self.write('pass')
 
     def visit_Print(self, node):
+        # XXX: python 2.6 only
+        self.newline(node)
+        self.write('print ')
+        want_comma = False
+        if node.dest is not None:
+            self.write(' >> ')
+            self.visit(node.dest)
+            want_comma = True
+        for value in node.values:
+            if want_comma:
+                self.write(', ')
+            self.visit(value)
+            want_comma = True
+        if not node.nl:
+            self.write(',')
     
     def visit_TryExcept(self, node):
+        self.newline(node)
+        self.write('try:')
+        self.body(node.body)
+        for handler in node.handlers:
+            self.visit(handler)
 
     def visit_TryFinally(self, node):
+        self.newline(node)
+        self.write('try:')
+        self.body(node.body)
+        self.newline(node)
+        self.write('finally:')
+        self.body(node.finalbody)
 
     def visit_Return(self, node):
-    
+        self.newline(node)
+        if node.value is None:
+            self.write('return')
+        else:
+            self.write('return ')
+            self.visit(node.value)
+
     def visit_Raise(self, node):
+        # XXX: Python 2.6 / 3.0 compatibility
+        self.newline(node)
+        self.write('raise')
+        if hasattr(node, 'exc') and node.exc is not None:
+            self.write(' ')
+            self.visit(node.exc)
+            if node.cause is not None:
+                self.write(' from ')
+                self.visit(node.cause)
+        elif hasattr(node, 'type') and node.type is not None:
+            self.visit(node.type)
+            if node.inst is not None:
+                self.write(', ')
+                self.visit(node.inst)
+            if node.tback is not None:
+                self.write(', ')
+                self.visit(node.tback)
 
     def visit_While(self, node):
+        self.newline(node)
+        self.write('while ')
+        self.visit(node.test)
+        self.write(':')
+        self.body_or_else(node)
 
     def visit_With(self, node):
-    
+        self.newline(node)
+        self.write('with ')
+        self.visit(node.context_expr)
+        if node.optional_vars is not None:
+            self.write(' as ')
+            self.visit(node.optional_vars)
+        self.write(':')
+        self.body(node.body)
+
     #Expressions
     def generator_visit(left, right):
+        def visit(self, node):
+            self.write(left)
+            self.visit(node.elt)
+            for comprehension in node.generators:
+                self.visit(comprehension)
+            self.write(right)
+
+        return visit
+
+    visit_ListComp = generator_visit('[', ']')
+    visit_GeneratorExp = generator_visit('(', ')')
+    visit_SetComp = generator_visit('{', '}')
+    del generator_visit
 
     def sequence_visit(left, right):
+        def visit(self, node):
+            self.write(left)
+            for idx, item in enumerate(node.elts):
+                if idx:
+                    self.write(', ')
+                self.visit(item)
+            self.write(right)
+
+        return visit
+
+    visit_List = sequence_visit('[', ']')
+    visit_Set = sequence_visit('{', '}')
+    del sequence_visit
 
     def visit_Attribute(self, node):
 
