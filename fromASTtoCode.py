@@ -488,21 +488,65 @@ class fromASTtoCode(NodeVisitor):
                 self.visit(node.step)
 
     def visit_Str(self, node):
+        self.write(repr(node.s))
 
     def visit_Starred(self, node):
+        self.write('*')
+        self.visit(node.value)
 
     def visit_Tuple(self, node):
+        self.write('(')
+        idx = -1
+        for idx, item in enumerate(node.elts):
+            if idx:
+                self.write(', ')
+            self.visit(item)
+        self.write(idx and ')' or ',)')
 
     def visit_UnaryOp(self, node):
+        self.write('(')
+        op = UNARYOP_SYMBOLS[type(node.op)]
+        self.write(op)
+        if op == 'not':
+            self.write(' ')
+        self.visit(node.operand)
+        self.write(')')
         
     def visit_Yield(self, node):
+        self.write('yield ')
+        self.visit(node.value)
 
     #Helper Util
     def visit_alias(self, node):
+        self.write(node.name)
+        if node.asname is not None:
+            self.write(' as ' + node.asname)
+
     def visit_arguments(self, node):
+        self.signature(node)
+
     def visit_comprehension(self, node):
+        self.write(' for ')
+        self.visit(node.target)
+        self.write(' in ')
+        self.visit(node.iter)
+        if node.ifs:
+            for if_ in node.ifs:
+                self.write(' if ')
+                self.visit(if_)
+
 
     def visit_excepthandler(self, node):
+        self.newline(node)
+        self.write('except')
+        if node.type is not None:
+            self.write(' ')
+            self.visit(node.type)
+            if node.name is not None:
+                self.write(' as ')
+                self.visit(node.name)
+        self.write(':')
+        self.body(node.body)
 
 
 def AST2Code(node, indentation = ' ' * 4, flagLineInfo = False):
