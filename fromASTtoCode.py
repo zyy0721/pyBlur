@@ -360,38 +360,132 @@ class fromASTtoCode(NodeVisitor):
     del sequence_visit
 
     def visit_Attribute(self, node):
+        self.visit(node.value)
+        self.write('.' + node.attr)
 
     def visit_Bytes(self, node):
+        self.write(repr(node.s))
 
     def visit_BinOp(self, node):
+        self.write('(') #fix bug
+        self.visit(node.left)
+        self.write(' %s ' % BINOP_SYMBOLS[type(node.op)])
+        self.visit(node.right)
+        self.write(')') # fix bug
+
 
     def visit_BoolOp(self, node):
+        self.write('(')
+        for idx, value in enumerate(node.values):
+            if idx:
+                self.write(' %s ' % BOOLOP_SYMBOLS[type(node.op)])
+            self.visit(value)
+        self.write(')')
 
     def visit_Compare(self, node):
+        self.write('(')
+        self.visit(node.left)
+        for op, right in zip(node.ops, node.comparators):
+            self.write(' %s ' % CMPOP_SYMBOLS[type(op)])
+            self.visit(right)
+        self.write(')')
 
     def visit_Call(self, node):
+        want_comma = []
+        def write_comma():
+            if want_comma:
+                self.write(', ')
+            else:
+                want_comma.append(True)
+
+        self.visit(node.func)
+        self.write('(')
+        for arg in node.args:
+            write_comma()
+            self.visit(arg)
+        for keyword in node.keywords:
+            write_comma()
+            self.write(keyword.arg + '=')
+            self.visit(keyword.value)
+        if node.starargs is not None:
+            write_comma()
+            self.write('*')
+            self.visit(node.starargs)
+        if node.kwargs is not None:
+            write_comma()
+            self.write('**')
+            self.visit(node.kwargs)
+        self.write(')')
 
     def visit_Dict(self, node):
+        self.write('{')
+        for idx, (key, value) in enumerate(zip(node.keys, node.values)):
+            if idx:
+                self.write(', ')
+            self.visit(key)
+            self.write(': ')
+            self.visit(value)
+        self.write('}')
 
     def visit_DictComp(self, node):
-    
+        self.write('{')
+        self.visit(node.key)
+        self.write(': ')
+        self.visit(node.value)
+        for comprehension in node.generators:
+            self.visit(comprehension)
+        self.write('}')
+
     def visit_ExtSlice(self, node):
+        for idx, item in node.dims:
+            if idx:
+                self.write(', ')
+            self.visit(item)
 
     def visit_Ellipsis(self, node):
+        self.write('Ellipsis')
 
     def visit_IfExp(self, node):
+        self.visit(node.body)
+        self.write(' if ')
+        self.visit(node.test)
+        self.write(' else ')
+        self.visit(node.orelse)
 
-    def visit_Lamda(self, node):
+    def visit_Lambda(self, node):
+        self.write('lambda ')
+        self.visit(node.args)
+        self.write(': ')
+        self.visit(node.body)
 
     def visit_Name(self, node):
+        self.write(node.id)
 
     def visit_Num(self, node):
+        self.write(repr(node.n))
 
     def visit_Repr(self, node):
+        self.write('`')
+        self.visit(node.value)
+        self.write('`')
+
 
     def visit_Subscript(self, node):
+        self.visit(node.value)
+        self.write('[')
+        self.visit(node.slice)
+        self.write(']')
 
     def visit_Slice(self, node):
+        if node.lower is not None:
+            self.visit(node.lower)
+        self.write(':')
+        if node.upper is not None:
+            self.visit(node.upper)
+        if node.step is not None:
+            self.write(':')
+            if not (isinstance(node.step, Name) and node.step.id == 'None'):
+                self.visit(node.step)
 
     def visit_Str(self, node):
 
