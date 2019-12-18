@@ -168,25 +168,85 @@ class fromASTtoCode(NodeVisitor):
         self.write(have_args and '):' or ':')
         self.body(node.body)
     
-    def visit_Continue(self, node): 
+    def visit_Continue(self, node):
+        self.newline(node)
+        self.write('continue')
     
     def visit_Delete(self, node):
+        self.newline(node)
+        self.write('del ')
+        for idx, target in enumerate(node):
+            if idx:
+                self.write(', ')
+            self.visit(target)
 
     def visit_Expr(self, node):
+        self.newline(node)
+        self.generic_visit(node)
     
     def visit_For(self, node):
+        self.newline(node)
+        self.write('for ')
+        self.visit(node.target)
+        self.write(' in ')
+        self.visit(node.iter)
+        self.write(':')
+        self.body_or_else(node)
 
     def visit_FunctionDef(self, node):
+        self.newline(extra=1)
+        self.decorators(node)
+        self.newline(node)
+        self.write('def %s(' % node.name)
+        self.visit(node.args)
+        self.write('):')
+        self.body(node.body)
 
     def visit_Global(self, node):
+        self.newline(node)
+        self.write('global ' + ', '.join(node.names))
 
     def visit_ImportFrom(self, node):
+        self.newline(node)
+        self.write('from %s%s import ' % ('.' * node.level, node.module))
+        for idx, item in enumerate(node.names):
+            if idx:
+                self.write(', ')
+            self.write(item)
 
     def visit_Import(self, node):
+        self.newline(node)
+        for item in node.names:
+            self.write('import ')
+            self.visit(item)
 
     def visit_If(self, node):
+        self.newline(node)
+        self.write('if ')
+        self.visit(node.test)
+        self.write(':')
+        self.body(node.body)
+        while True:
+            else_ = node.orelse
+            if len(else_) == 0:
+                break
+            elif len(else_) == 1 and isinstance(else_[0], If):
+                node = else_[0]
+                self.newline()
+                self.write('elif ')
+                self.visit(node.test)
+                self.write(':')
+                self.body(node.body)
+            else:
+                self.newline()
+                self.write('else:')
+                self.body(else_)
+                break
+
 
     def visit_Nonlocal(self, node):
+        self.newline(node)
+        self.write('nonlocal ' + ', '.join(node.names))
 
     def visit_Pass(self, node):
 
